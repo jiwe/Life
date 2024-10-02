@@ -19,9 +19,53 @@ fn random_state(width: usize, height: usize) -> Vec<Vec<usize>> {
     state
 }
 
-fn render(state: Vec<Vec<usize>>) {
-    let DEAD = "#";
-    let ALIVE = "@";
+fn get_alive_size(i: i32, j: i32, state: &Vec<Vec<usize>>) -> u32 {
+    let mut alive_size = 0;
+
+    for x in i - 1..=i + 1 {
+        for y in j - 1..=j + 1 {
+            if x < 0
+                || x >= state.len() as i32
+                || y < 0
+                || y >= state[0].len() as i32
+                || (x == i && y == j)
+            {
+                continue;
+            }
+            if state[x as usize][y as usize] == 1 {
+                alive_size += 1;
+            }
+        }
+    }
+
+    alive_size
+}
+
+// rules
+// 任何有 0 个或 1 个活邻居的活细胞都会因细胞数量不足而死亡
+// 任何有 2 或 3 个活邻居的活细胞都能存活，因为它的邻居恰好合适
+// 任何有超过 3 个活邻居的活细胞都会因过度繁殖而死亡
+// 任何有 3 个活邻居的死细胞都会通过繁殖而复活
+fn next_board_state(state: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
+    let mut next_state = state.clone();
+
+    for (i, row) in state.iter().enumerate() {
+        for (j, _) in row.iter().enumerate() {
+            let alive_size = get_alive_size(i as i32, j as i32, &state);
+            if !(2..=3).contains(&alive_size) {
+                next_state[i][j] = 0;
+            } else if alive_size == 3 && state[i][j] == 0 {
+                next_state[i][j] = 1;
+            }
+        }
+    }
+
+    next_state
+}
+
+fn render(state: &Vec<Vec<usize>>) {
+    let DEAD = " ";
+    let ALIVE = "#";
 
     for (i, row) in state.iter().enumerate() {
         if i == 0 {
@@ -58,8 +102,11 @@ fn render(state: Vec<Vec<usize>>) {
 }
 
 fn main() {
-    let dead_state = dead_state(40, 30);
-    render(dead_state);
-    let random_state = random_state(20, 30);
-    render(random_state);
+    // let dead_state = dead_state(40, 30);
+    // render(&dead_state);
+    // render(&next_board_state(&dead_state));
+
+    let random_state = random_state(35, 25);
+    render(&random_state);
+    render(&next_board_state(&random_state));
 }
