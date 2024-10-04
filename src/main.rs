@@ -1,4 +1,20 @@
+use crossterm::{
+    cursor::{Hide, MoveTo, Show},
+    execute,
+    terminal::{Clear, ClearType},
+};
 use rand::Rng;
+use std::io::stdout;
+
+fn clear_screen() -> Result<(), std::io::Error> {
+    let mut stdout = stdout();
+    // 隐藏光标，避免闪烁
+    execute!(stdout, Hide)?;
+
+    execute!(stdout, Clear(ClearType::All))?; // 清除屏幕
+
+    Ok(())
+}
 
 fn dead_state(width: usize, height: usize) -> Vec<Vec<usize>> {
     vec![vec![0; width]; height]
@@ -64,6 +80,9 @@ fn next_board_state(state: &Vec<Vec<usize>>) -> Vec<Vec<usize>> {
 }
 
 fn render(state: &Vec<Vec<usize>>) {
+    let mut stdout = stdout();
+    execute!(stdout, MoveTo(0, 0));
+
     let DEAD = " ";
     let ALIVE = "#";
 
@@ -101,12 +120,20 @@ fn render(state: &Vec<Vec<usize>>) {
     }
 }
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
     // let dead_state = dead_state(40, 30);
     // render(&dead_state);
     // render(&next_board_state(&dead_state));
 
-    let random_state = random_state(35, 25);
-    render(&random_state);
-    render(&next_board_state(&random_state));
+    // render(&random_state);
+    // render(&next_board_state(&random_state));
+
+    let mut random_state = random_state(35, 25);
+    loop {
+        clear_screen()?;
+        render(&random_state);
+        random_state = next_board_state(&random_state);
+        std::thread::sleep(std::time::Duration::from_secs_f32(0.1)); // 暂停一秒
+    }
+    Ok(())
 }
